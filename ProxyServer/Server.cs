@@ -1,15 +1,15 @@
-﻿
-using SharpPcap;
-using PacketDotNet;
+﻿using PacketDotNet;
 using SharpPcap.LibPcap;
+using SharpPcap;
 
-namespace PoC_Test
+
+namespace ProxyServerProgram
 {
     internal class Server
     {
         private static CaptureFileWriterDevice captureFileWriter;
 
-        public static void Main()
+        public static void ServerInitialRun()
         {
             // Print SharpPcap version
             var ver = Pcap.SharpPcapVersion;
@@ -37,6 +37,7 @@ namespace PoC_Test
             {
                 /* Description */
                 Console.WriteLine("{0}) {1} {2}", i, dev.Name, dev.Description);
+
                 i++;
             }
 
@@ -54,7 +55,8 @@ namespace PoC_Test
 
             // Open the device for capturing
             int readTimeoutMilliseconds = 1000;
-            device.Open(mode: DeviceModes.Promiscuous | DeviceModes.DataTransferUdp | DeviceModes.NoCaptureLocal, read_timeout: readTimeoutMilliseconds);
+            device.Open(mode: DeviceModes.DataTransferUdp | DeviceModes.NoCaptureLocal, read_timeout: readTimeoutMilliseconds);
+
 
             Console.WriteLine();
             Console.WriteLine("-- Listening on {0} {1}, writing to {2}, hit 'Enter' to stop...",
@@ -89,9 +91,17 @@ namespace PoC_Test
         {
             //var device = (ICaptureDevice)sender;
 
-            // write the packet to the file
+            // Output packet contents to the console
+            var time = e.Header.Timeval.Date;
+            var len = e.Data.Length;
             var rawPacket = e.GetPacket();
+            Console.WriteLine("{0}:{1}:{2},{3} Len={4}",
+                time.Hour, time.Minute, time.Second, time.Millisecond, len);
+            Console.WriteLine(rawPacket.ToString());
+
+            // write the packet to the file
             captureFileWriter.Write(rawPacket);
+            // parse packet
             Console.WriteLine("Packet dumped to file.");
 
             if (rawPacket.LinkLayerType == PacketDotNet.LinkLayers.Ethernet)
@@ -108,5 +118,5 @@ namespace PoC_Test
                 packetIndex++;
             }
         }
-    }
+}
 }
