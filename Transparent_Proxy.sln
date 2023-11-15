@@ -5,6 +5,10 @@ VisualStudioVersion = 17.5.002.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ProxyServerProgram", "ProxyServer\ProxyServerProgram.csproj", "{EBF25237-1026-482F-9B0A-BB4376D23B15}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ProxyFunnel", "ProxyServer\ProxyFunnel\ProxyFunnel.csproj", "{B28F1E6B-1DC3-4FC2-A677-245BA7D5D2D5}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TcpServer", "ProxyServer\TcpServer\TcpServer.csproj", "{CA2164CF-C5DE-4E24-9DBD-9F3FB530A91B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +19,14 @@ Global
 		{EBF25237-1026-482F-9B0A-BB4376D23B15}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{EBF25237-1026-482F-9B0A-BB4376D23B15}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{EBF25237-1026-482F-9B0A-BB4376D23B15}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B28F1E6B-1DC3-4FC2-A677-245BA7D5D2D5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B28F1E6B-1DC3-4FC2-A677-245BA7D5D2D5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B28F1E6B-1DC3-4FC2-A677-245BA7D5D2D5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B28F1E6B-1DC3-4FC2-A677-245BA7D5D2D5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CA2164CF-C5DE-4E24-9DBD-9F3FB530A91B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CA2164CF-C5DE-4E24-9DBD-9F3FB530A91B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CA2164CF-C5DE-4E24-9DBD-9F3FB530A91B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CA2164CF-C5DE-4E24-9DBD-9F3FB530A91B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
