@@ -4,9 +4,11 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace PoC_Test
+namespace TcpServer
 {
-    internal class Middleware
+    internal class HttpsHandler
     {
+        private static HttpClient sharedClient = new HttpClient();
+
     }
 }
