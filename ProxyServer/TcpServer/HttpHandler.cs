@@ -17,7 +17,7 @@ namespace TcpServer
         }
 
         /// <summary>
-        /// Takes a Listener, finds out the URL of the request, and forwards it to the correct server. 
+        /// Takes a Listener, finds out the URL of the request, and forwards it to the correct server. Returns response from server.
         /// </summary>
         /// <returns></returns>
         public async void ForwardHttpCall(HttpListenerContext context)
@@ -30,9 +30,8 @@ namespace TcpServer
             var incomingRequestURL = context.Request.Url;
             //var response = sharedClient.GetAsync(url);
             forwardRequest.Method = new HttpMethod(context.Request.HttpMethod);
-            // enable trace for debugging
-            forwardRequest.Method = HttpMethod.Trace;
-            forwardRequest.RequestUri = incomingRequestURL;
+
+            forwardRequest.RequestUri = ChangePortToDefaultHTTP(incomingRequest);
 
             // for each of the headers, add them to the request.
             foreach (var header in incomingRequest.Headers.AllKeys)
@@ -44,24 +43,21 @@ namespace TcpServer
             // if there is a body in the incomingRequest, copy it.
             if (incomingRequest.HasEntityBody)
             {
-                using (Stream body = incomingRequest.InputStream)  // here we have data
+                using (Stream body = incomingRequest.InputStream)
                 {
-                    using (var reader = new StreamReader(body, incomingRequest.ContentEncoding))
+                    using (MemoryStream stream = new MemoryStream())
                     {
-                        forwardRequest.Content = new StringContent(reader.ReadToEnd());
+                        body.CopyTo(stream);
+                        forwardRequest.Content = new ByteArrayContent(stream.ToArray());
                     }
                 }
             }
 
             // Receive the response from the server and forward it back to the client
             await Console.Out.WriteLineAsync("Getting response from server");
-            //change the port of the incomingRequestURL to port 80
 
-
-            //HttpResponseMessage responseFromServer = await sharedClient.GetAsync(incomingRequestURL);
-
-            //HttpResponseMessage responseFromServer = await sharedClient.SendAsync(forwardRequest);
-            HttpResponseMessage responseFromServer = sharedClient.GetAsync("http://httpbin.org/").Result;
+            HttpResponseMessage responseFromServer = await sharedClient.SendAsync(forwardRequest);
+            //HttpResponseMessage responseFromServer = sharedClient.GetAsync("http://httpbin.org/").Result;
             await Console.Out.WriteLineAsync(responseFromServer.ToString());
 
 
@@ -87,5 +83,14 @@ namespace TcpServer
             responseToClient.Close();
             //return responseToClient;
         }
+        private Uri ChangePortToDefaultHTTP(HttpListenerRequest request)
+        {
+            //get the url from the request
+            UriBuilder uriBuilder = new UriBuilder(request.Url);
+            //change the port to 80
+            uriBuilder.Port = 80;
+            //return the new url
+            return uriBuilder.Uri;
+        }   
     }
 }
