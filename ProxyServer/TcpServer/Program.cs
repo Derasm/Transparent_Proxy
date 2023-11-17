@@ -1,4 +1,70 @@
-﻿//using System.Net.Sockets;
+﻿using System.Net.Sockets;
+using System.Net;
+using System.Text;
+using TcpServer;
+
+namespace TcpServer
+{
+    class Program
+    {
+        static HttpHandler HttpHandler = new HttpHandler();
+        static HttpsHandler HttpsHandler = new HttpsHandler();
+        /// <summary>
+        /// Step one: make client and listener
+        /// 2: listen for incoming requests on listener on port / Adress
+        /// 3: Forward incoming request - requires getting a response from an endClient at the address the listener intercepted
+        /// 4. return response from endClient to original client.
+        /// 
+        /// 
+        /// </summary>
+
+        public static async Task Main()
+        {
+            //listener that listens for incoming http calls on 127.0.0.1:5551
+            HttpListener listener = new HttpListener();
+            listener.Prefixes.Add("http://127.0.0.1:5551/");
+            //start listening
+            listener.Start();
+            Console.WriteLine("Listening on port 5551 and url 127.0.0.1");
+            while (true)
+            {
+                var context = listener.GetContext();
+                //when a request comes in, pass it to HandleRequest
+                await HandleRequest(listener);
+            }
+        }
+        /// <summary>
+        /// when an incoming request comes, handle it by figuring out where it wants to go, and then forward it to the correct server.
+        /// </summary>
+        /// <param name="listener"></param>
+        static async Task<HttpResponseMessage> HandleRequest(HttpListener listener)
+        {
+            HttpListenerContext context = await listener.GetContextAsync();
+            HttpListenerRequest request = context.Request;
+            HttpResponseMessage response = new HttpResponseMessage();
+            //a connection is made
+            Console.WriteLine("Connected on");
+            Console.WriteLine(context.Request.Url);
+            //figure out if it is http or https. If it is https, make a handshake with the endServer. else just forward it.
+            if (request.IsSecureConnection)
+            {
+                //make handshake with endServer
+                //SSLHandshake();
+                HttpsHandler.HandleRequest(listener);
+            }
+            else
+            {
+                //forward request
+                response = await HttpHandler.ForwardHttpCall(listener);
+            }
+
+
+            return response;
+        }
+    }
+}
+
+//using System.Net.Sockets;
 //using System.Net;
 //using System.Text;
 
@@ -52,3 +118,4 @@
 //        return await Task.FromResult(request);
 //    }
 //}
+
