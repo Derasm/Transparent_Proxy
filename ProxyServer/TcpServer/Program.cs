@@ -2,13 +2,15 @@
 using System.Net;
 using System.Text;
 using TcpServer;
+using System.Security.Cryptography.X509Certificates;
 
 namespace TcpServer
 {
     class Program
     {
-        static HttpHandler HttpHandler = new HttpHandler();
-        static HttpsHandler HttpsHandler = new HttpsHandler();
+        static HttpHandler httpHandler = new HttpHandler();
+        static HttpsHandler httpsHandler = new HttpsHandler();
+        static HttpListener listener = new HttpListener();
         /// <summary>
         /// Step one: make client and listener
         /// 2: listen for incoming requests on listener on port / Adress
@@ -21,45 +23,53 @@ namespace TcpServer
         public static async Task Main()
         {
             //listener that listens for incoming http calls on 127.0.0.1:5551
-            HttpListener listener = new HttpListener();
-            listener.Prefixes.Add("http://127.0.0.1:5551/");
+            string[] prefixes = { "https://127.0.0.1:5552/", "http://127.0.0.1:5551/" };
+            
+            foreach (string prefix in prefixes)
+            {
+                listener.Prefixes.Add(prefix);
+                await Console.Out.WriteLineAsync($"listening on {prefix}");
+            }
+            // get a certificate. This is used for the SSL handshake and bound using netsh command instead of here in the code. 
+            CertificateHandler certificateHandler = new CertificateHandler();
+            //X509Certificate2 certificate = certificateHandler.Certificate;
             //start listening
             listener.Start();
-            Console.WriteLine("Listening on port 5551 and url 127.0.0.1");
+            // program loop
             while (true)
             {
                 var context = listener.GetContext();
                 //when a request comes in, pass it to HandleRequest
-                await HandleRequest(listener);
+                //listener.BeginGetContext(new AsyncCallback(HandleRequest), listener);
+                HandleRequest(listener);
             }
         }
         /// <summary>
         /// when an incoming request comes, handle it by figuring out where it wants to go, and then forward it to the correct server.
         /// </summary>
         /// <param name="listener"></param>
-        static async Task<HttpResponseMessage> HandleRequest(HttpListener listener)
+        static async void HandleRequest(HttpListener listener)
         {
-            HttpListenerContext context = await listener.GetContextAsync();
-            HttpListenerRequest request = context.Request;
+            HttpListenerContext listenerContext = await listener.GetContextAsync();
+            HttpListenerRequest request = listenerContext.Request;
             HttpResponseMessage response = new HttpResponseMessage();
             //a connection is made
-            Console.WriteLine("Connected on");
-            Console.WriteLine(context.Request.Url);
+            await Console.Out.WriteLineAsync("Connected on");
+            await Console.Out.WriteLineAsync(listenerContext.Request.Url.ToString());
             //figure out if it is http or https. If it is https, make a handshake with the endServer. else just forward it.
             if (request.IsSecureConnection)
             {
                 //make handshake with endServer
                 //SSLHandshake();
-                HttpsHandler.HandleRequest(listener);
+                httpsHandler.HandleRequest(listener);
             }
             else
             {
                 //forward request
-                response = await HttpHandler.ForwardHttpCall(listener);
+                await Console.Out.WriteLineAsync("Http request received");
+                httpHandler.ForwardHttpCall(listenerContext);
             }
-
-
-            return response;
+            //listener.BeginGetContext(new AsyncCallback(HandleRequest), listener);
         }
     }
 }

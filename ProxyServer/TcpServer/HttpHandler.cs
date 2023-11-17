@@ -20,21 +20,28 @@ namespace TcpServer
         /// Takes a Listener, finds out the URL of the request, and forwards it to the correct server. 
         /// </summary>
         /// <returns></returns>
-        public async Task<HttpResponseMessage> ForwardHttpCall(HttpListener listener)
+        public async void ForwardHttpCall(HttpListenerContext context)
         {
+            await Console.Out.WriteLineAsync("Context of message is: ");
+            await Console.Out.WriteLineAsync(context.ToString());
             //Get URL to call, then call that url, get response, return response.
-            var context = listener.GetContext();
             HttpRequestMessage forwardRequest = new HttpRequestMessage();
-            var incomingRequest = listener.GetContext().Request;
-            var url = listener.GetContext().Request.Url;
+            var incomingRequest = context.Request;
+            var incomingRequestURL = context.Request.Url;
             //var response = sharedClient.GetAsync(url);
-            forwardRequest.Method = new HttpMethod(listener.GetContext().Request.HttpMethod);
+            forwardRequest.Method = new HttpMethod(context.Request.HttpMethod);
+            // enable trace for debugging
+            forwardRequest.Method = HttpMethod.Trace;
+            forwardRequest.RequestUri = incomingRequestURL;
+
             // for each of the headers, add them to the request.
             foreach (var header in incomingRequest.Headers.AllKeys)
             {
                 forwardRequest.Headers.TryAddWithoutValidation(header, incomingRequest.Headers[header]);
             }
-            // if there is a body in the incomingRequest
+
+
+            // if there is a body in the incomingRequest, copy it.
             if (incomingRequest.HasEntityBody)
             {
                 using (Stream body = incomingRequest.InputStream)  // here we have data
@@ -47,8 +54,28 @@ namespace TcpServer
             }
 
             // Receive the response from the server and forward it back to the client
-            HttpResponseMessage responseFromServer = await sharedClient.SendAsync(forwardRequest);
+            await Console.Out.WriteLineAsync("Getting response from server");
+            //change the port of the incomingRequestURL to port 80
+
+
+            //HttpResponseMessage responseFromServer = await sharedClient.GetAsync(incomingRequestURL);
+
+            //HttpResponseMessage responseFromServer = await sharedClient.SendAsync(forwardRequest);
+            HttpResponseMessage responseFromServer = sharedClient.GetAsync("http://httpbin.org/").Result;
+            await Console.Out.WriteLineAsync(responseFromServer.ToString());
+
+
+            //Copy content of responseFromServer to client.
+
             HttpListenerResponse responseToClient = context.Response;
+            responseToClient.StatusCode = (int)responseFromServer.StatusCode;
+            responseToClient.StatusDescription = responseFromServer.ReasonPhrase ?? "Error in StatusDescription";
+
+            foreach (var header in responseFromServer.Headers)
+            {
+                responseToClient.Headers.Add(header.Key, header.Value.First());
+            }
+
             //iterate over the response
             if (responseFromServer.Content != null)
             {
@@ -58,7 +85,7 @@ namespace TcpServer
             }
             // close the connection
             responseToClient.Close();
-            return responseFromServer;
+            //return responseToClient;
         }
     }
 }
